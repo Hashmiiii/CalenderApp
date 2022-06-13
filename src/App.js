@@ -1,208 +1,149 @@
-import logo from './logo.svg';
-import './App.css';
-import React, { Component } from "react";
-import ReactDOM from "react-dom";
-// import BigCalendar from "react-big-calendar";
-import { Col, Row } from "reactstrap";
-
+import React, { useEffect, useState, useRef, memo } from "react";
+import "./style.css";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin, { Draggable } from "@fullcalendar/interaction";
-import Alert from "sweetalert2";
 
-// import "@fullcalendar/core/main.css";
-// import "@fullcalendar/daygrid/main.css";
-// import "@fullcalendar/timegrid/main.css";
-import "bootstrap/dist/css/bootstrap.min.css";
+const ExternalEvent = memo(({ event }) => {
+  let elRef = useRef(null);
 
+  useEffect(() => {
+    let draggable = new Draggable(elRef.current, {
+      eventData: function () {
+        return { ...event, create: true };
+      }
+    });
 
+    // a cleanup function
+    return () => draggable.destroy();
+  });
 
-// import moment from "moment";
-class App extends Component{
+  return (
+    <div
+      ref={elRef}
+      className="fc-event fc-h-event mb-1 fc-daygrid-event fc-daygrid-block-event p-2"
+      title={event.title}
+      style={{
+        backgroundColor: event.color,
+        borderColor: event.color,
+        cursor: "pointer"
+      }}
+    >
+      <div className="fc-event-main">
+        <div>
+          <strong>{event.title}</strong>
+        </div>
+      </div>
+    </div>
+  );
+});
 
-  state = {
+export default function App() {
+  // initial state
+  const [state, setState] = useState({
+    weekendsVisible: true,
+    externalEvents: [
+      { title: "Art 1", color: "#0097a7", id: 34432 },
+      { title: "Art 2", color: "#f44336", id: 323232 },
+      { title: "Art 3", color: "#f57f17", id: 1111 },
+      { title: "Art 4", color: "#90a4ae", id: 432432 }
+    ],
     calendarEvents: [
       {
-        title: "Atlanta Monster",
-        start: new Date("2019-04-04 00:00"),
-        id: "99999998"
+        id: 1,
+        title: "All-day event",
+        color: "#388e3c",
+        start: "2020-12-12",
+        end: "2020-12-12"
       },
       {
-        title: "My Favorite Murder",
-        start: new Date("2019-04-05 00:00"),
-        id: "99999999"
+        id: 2,
+        title: "Timed event",
+        color: "#0097a7",
+        start: "2020-12-07",
+        end: "2020-12-10"
       }
-    ],
-    events: [
-      { title: "Event 1", id: "1" },
-      { title: "Event 2", id: "2" },
-      { title: "Event 3", id: "3" },
-      { title: "Event 4", id: "4" },
-      { title: "Event 5", id: "5" }
     ]
-  };
+  });
 
-  componentDidMount() {
-    let draggableEl = document.getElementById("external-events");
-    console.log(draggableEl);
-    new Draggable(draggableEl, {
-      itemSelector: ".fc-event",
-      eventData: function(eventEl) {
-        let title = eventEl.getAttribute("title");
-        let id = eventEl.getAttribute("data");
-        return {
-          title: title,
-          id: id
-        };
-      }
-    });
-  }
+  // add external events
+  const addEvent = () => {
+    let newEvent = {
+      id: 3433,
+      title: "Timed event",
+      color: "#333333",
+      start: "2020-12-31",
+      end: "2020-12-31",
+      custom: "custom stuff"
+    };
 
-  eventClick = eventClick => {
-    Alert.fire({
-      title: eventClick.event.title,
-      html:
-        `<div className="table-responsive">
-      <table className="table">
-      <tbody>
-      <tr >
-      <td>Title</td>
-      <td><strong>` +
-        eventClick.event.title +
-        `</strong></td>
-      </tr>
-      <tr >
-      <td>Start Time</td>
-      <td><strong>
-      ` +
-        eventClick.event.start +
-        `
-      </strong></td>
-      </tr>
-      </tbody>
-      </table>
-      </div>`,
-
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Remove Event",
-      cancelButtonText: "Close"
-    }).then(result => {
-      if (result.value) {
-        eventClick.event.remove(); // It will remove event from the calendar
-        Alert.fire("Deleted!", "Your Event has been deleted.", "success");
-      }
+    setState((state) => {
+      return {
+        ...state,
+        externalEvents: state.externalEvents.concat(newEvent)
+      };
     });
   };
 
-  render(){
-    return (
-<div className="animated fadeIn p-4 demo-app App">
-<Row>
-          <Col lg={3} sm={3} md={3}>
-            <div
-              id="external-events"
-              style={{
-                padding: "10px",
-                width: "20%",
-                height: "auto",
-                maxHeight: "-webkit-fill-available"
-              }}
-            >
-              <p align="center">
-                <strong> Events</strong>
-              </p>
-              {this.state.events.map(event => (
-                <div
-                  className="fc-event"
-                  title={event.title}
-                  data={event.id}
-                  key={event.id}
-                >
-                  {event.title}
-                </div>
-              ))}
-            </div>
-          </Col>
+  // handle event receive
+  const handleEventReceive = (eventInfo) => {
+    const newEvent = {
+      id: eventInfo.draggedEl.getAttribute("data-id"),
+      title: eventInfo.draggedEl.getAttribute("title"),
+      color: eventInfo.draggedEl.getAttribute("data-color"),
+      start: eventInfo.date,
+      end: eventInfo.date,
+      custom: eventInfo.draggedEl.getAttribute("data-custom")
+    };
 
-          <Col lg={9} sm={9} md={9}>
-            <div className="demo-app-calendar" id="mycalendartest">
-              <FullCalendar
-                defaultView="dayGridMonth"
-                header={{
-                  left: "prev,next today",
-                  center: "title",
-                  right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek"
-                }}
-                rerenderDelay={10}
-                eventDurationEditable={false}
-                editable={true}
-                droppable={true}
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                ref={this.calendarComponentRef}
-                weekends={this.state.calendarWeekends}
-                events={this.state.calendarEvents}
-                eventDrop={this.drop}
-                // drop={this.drop}
-                eventReceive={this.eventReceive}
-                eventClick={this.eventClick}
-                // selectable={true}
-              />
-            </div>
-          </Col>
-        </Row>
+    setState((state) => {
+      return {
+        ...state,
+        calendarEvents: state.calendarEvents.concat(newEvent)
+      };
+    });
+  };
+
+  return (
+    <div className="App">
+      <div style={{ float: "left", width: "25%" }}>
+        <div style={{ margin: "0 0 20px" }}>
+          <input
+            type="submit"
+            name="name"
+            onClick={addEvent}
+            value="add external event"
+          />
+        </div>
+        <div id="external-events">
+          {state.externalEvents.map((event) => (
+            <ExternalEvent key={event.id} event={event} />
+          ))}
+        </div>
+      </div>
+      <div style={{ float: "left", width: "75%" }}>
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay"
+          }}
+          initialView="dayGridMonth"
+          editable={true}
+          selectable={true}
+          selectMirror={true}
+          dayMaxEvents={true}
+          weekends={state.weekendsVisible}
+          events={state.calendarEvents}
+          droppable={true}
+          eventReceive={handleEventReceive}
+        />
+      </div>
     </div>
-    );
-  }
+  );
 }
-// function App() {
-//   return (
-//     <div className="App">
-//       <header className="App-header">
-//         <img src={logo} className="App-logo" alt="logo" />
-//         <p>
-//           Edit <code>src/App.js</code> and save to reload.
-//         </p>
-//         <a
-//           className="App-link"
-//           href="https://reactjs.org"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           Learn React
-//         </a>
-//       </header>
-//       <Row>
-//         <col lg={3} sm={3} md={3}>
-//         <div
-//               id="external-events"
-//               style={{
-//                 padding: "10px",
-//                 width: "80%",
-//                 height: "auto",
-//                 maxHeight: "-webkit-fill-available"
-//               }}>
-//                 <p align="center">
-//                 <strong> Events</strong>
-//               </p>
-//               {this.state.events.map(event => (
-//                 <div
-//                   className="fc-event"
-//                   title={event.title}
-//                   data={event.id}
-//                   key={event.id}
-//                 >
-//                   {event.title}
-//                 </div>
-//               ))}
-//         </div>
-//         </col>
-//       </Row>
 
-//     </div>
-//   );
-// }
 
-export default App;
+//export default App;

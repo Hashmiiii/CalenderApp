@@ -1,8 +1,8 @@
-/* .App {
+.App {
   text-align: center;
-} */
+}
 
-/* .App-logo {
+.App-logo {
   height: 40vmin;
   pointer-events: none;
 }
@@ -35,37 +35,4 @@
   to {
     transform: rotate(360deg);
   }
-} */
-
-.App {
-  font-family: sans-serif;
-  text-align: center;
 }
-#external-events {
-  position: absolute;
-  z-index: 2;
-
-  padding: 0 10px;
-  border: 1px solid #ccc;
-  background: #eee;
-  overflow-y: scroll;
-}
-
-#external-events .fc-event {
-  margin: 1em 0;
-  cursor: move;
-  
-}
-
-.fc-event {
-  position: relative;
-  display: block;
-  font-size: .85em;
-  line-height: 1.4;
-  border-radius: 3px;
-  border: 1px solid #3788d8;
-  background-color: #3788d8;
-}
-
-
-
